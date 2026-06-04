@@ -215,7 +215,7 @@ export default function VitaFlow() {
     const prompt = `I am a 17-year-old male, 89kg, 1.80m tall. I do construction work some days and go running other days. My goal is to lose fat and gain muscle (body recomposition). Right now I feel: "${symptomLabel}". Give me exactly 3 short, numbered, practical tips specific to this feeling AND my lifestyle. Be direct. Mention specific foods, timing, or habits. Max 130 words total.`;
     try {
       const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$import.meta.env.VITE_GEMINI_API_KEY`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
