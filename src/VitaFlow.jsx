@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DietChat from "./components/DietChat";
 
 // ── Manuel's real calculated stats ─────────────────────────────────────────
 // BMR (Mifflin-St Jeor male): 10×89 + 6.25×180 − 5×17 + 5 = 1935 kcal
@@ -191,8 +192,6 @@ const tabs = ["🏠 Stats", "🩺 How I Feel", "📅 Week Plan", "💊 Supplemen
 export default function VitaFlow() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedSymptom, setSelectedSymptom] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [aiAdvice, setAiAdvice] = useState("");
   const [showRec, setShowRec] = useState(false);
   const [dayType, setDayType] = useState("work");
 
@@ -204,42 +203,18 @@ export default function VitaFlow() {
     rest: { kcal: PROFILE.goal.rest, carb: PROFILE.macros.carbs.rest },
   };
 
-  // ── Replace YOUR_GEMINI_API_KEY below with your key from aistudio.google.com ──
-  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-  async function getAIAdvice(symptomId) {
-    setLoading(true);
-    setAiAdvice("");
-    setShowRec(false);
-    const symptomLabel = symptoms.find(s => s.id === symptomId)?.label;
-    const prompt = `I am a 17-year-old male, 89kg, 1.80m tall. I do construction work some days and go running other days. My goal is to lose fat and gain muscle (body recomposition). Right now I feel: "${symptomLabel}". Give me exactly 3 short, numbered, practical tips specific to this feeling AND my lifestyle. Be direct. Mention specific foods, timing, or habits. Max 130 words total.`;
-    try {
-      const r = await fetch(
-       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY},
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
-          }),
-        }
-      );
-      const d = await r.json();
-      const text = d.candidates?.[0]?.content?.parts?.[0]?.text;
-      setAiAdvice(text || "No advice returned.");
-    } catch {
-      setAiAdvice("Could not reach AI. Check your connection.");
-    }
-    setLoading(false);
+  function showRecommendations() {
     setShowRec(true);
   }
 
   function selectSymptom(id) {
     setSelectedSymptom(id);
     setShowRec(false);
-    setAiAdvice("");
   }
+
+  const selectedSymptomLabel = selectedSymptom
+    ? symptoms.find((s) => s.id === selectedSymptom)?.label
+    : null;
 
   const bg = "linear-gradient(160deg,#0b0b16 0%,#111827 60%,#0c1a1f 100%)";
 
@@ -356,9 +331,9 @@ export default function VitaFlow() {
                 {dayType === "work" ? "🏗️ Work Day" : dayType === "run" ? "🏃 Run Day" : "😴 Rest Day"} — Today's Macro Targets
               </div>
               {[
-               { label: "Calories", val: dayGoals[dayType].kcal.toLocaleString() + " kcal", pct: dayType === "work" ? 1 : dayType === "run" ? 0.88 : 0.74, color: "#f59e0b" },
+                { label: "Calories", val: `${dayGoals[dayType].kcal.toLocaleString()} kcal`, pct: dayType === "work" ? 1 : dayType === "run" ? 0.88 : 0.74, color: "#f59e0b" },
                 { label: "Protein",  val: "178 g",   pct: 1,    color: "#ef4444" },
-                { label: "Carbs", val: dayGoals[dayType].carb + " g", pct: dayType === "work" ? 1 : dayType === "run" ? 0.78 : 0.53, color: "#22d3ee" },
+                { label: "Carbs",    val: `${dayGoals[dayType].carb} g`, pct: dayType === "work" ? 1 : dayType === "run" ? 0.78 : 0.53, color: "#22d3ee" },
                 { label: "Fat",      val: "80 g",    pct: 1,    color: "#8b5cf6" },
               ].map((m, i) => (
                 <div key={i} style={{ marginBottom: 10 }}>
@@ -420,7 +395,7 @@ export default function VitaFlow() {
           <div>
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 2 }}>How are you feeling? 🧠</div>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Tap a symptom → get fruits, supplements + AI tips</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Tap a symptom → get fruits & supplements, or ask the diet chat</div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginBottom: 16 }}>
@@ -439,17 +414,21 @@ export default function VitaFlow() {
               ))}
             </div>
 
-            {selectedSymptom && (
-              <button onClick={() => getAIAdvice(selectedSymptom)} disabled={loading} style={{
+            {selectedSymptom && !showRec && (
+              <button onClick={showRecommendations} style={{
                 width: "100%", padding: 14, borderRadius: 12,
-                background: loading ? "rgba(99,102,241,0.3)" : "linear-gradient(135deg,#6366f1,#22d3ee)",
+                background: "linear-gradient(135deg,#6366f1,#22d3ee)",
                 border: "none", color: "#fff", fontSize: 14, fontWeight: 800,
-                cursor: loading ? "wait" : "pointer", marginBottom: 18, letterSpacing: 0.2,
+                cursor: "pointer", marginBottom: 18, letterSpacing: 0.2,
                 transition: "all 0.2s",
               }}>
-                {loading ? "⏳ Loading AI tips..." : "✨ Get My Recommendations"}
+                ✨ Show Fruits & Supplements
               </button>
             )}
+
+            <div style={{ marginBottom: showRec ? 12 : 0 }}>
+              <DietChat symptomLabel={selectedSymptomLabel} />
+            </div>
 
             {currentRec && showRec && (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -495,16 +474,6 @@ export default function VitaFlow() {
                   <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.65 }}>{currentRec.tip}</div>
                 </div>
 
-                {/* AI Advice */}
-                {aiAdvice && (
-                  <div style={{
-                    background: "rgba(34,211,238,0.07)", border: "1px solid rgba(34,211,238,0.25)",
-                    borderRadius: 14, padding: 14,
-                  }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 8, color: "#22d3ee" }}>✨ AI Tips — Made for You</div>
-                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.7, whiteSpace: "pre-line" }}>{aiAdvice}</div>
-                  </div>
-                )}
               </div>
             )}
           </div>
