@@ -356,7 +356,7 @@ export default function VitaFlow() {
                 {dayType === "work" ? "🏗️ Work Day" : dayType === "run" ? "🏃 Run Day" : "😴 Rest Day"} — Today's Macro Targets
               </div>
               {[
-                { label: "Calories", val: `${dayGoals[dayType].kcal.toLocaleString()} kcal`, pct: dayType === "work" ? 1 : dayType === "run" ? 0.88 : 0.74, color: "#f59e0b" },
+               { label: "Calories", val: `${dayGoals[dayType].kcal.toLocaleString()} kcal`, pct: dayType === "work" ? 1 : dayType === "run" ? 0.88 : 0.74, color: "#f59e0b" },
                 { label: "Protein",  val: "178 g",   pct: 1,    color: "#ef4444" },
                 { label: "Carbs",    val: `${dayGoals[dayType].carb} g`, pct: dayType === "work" ? 1 : dayType === "run" ? 0.78 : 0.53, color: "#22d3ee" },
                 { label: "Fat",      val: "80 g",    pct: 1,    color: "#8b5cf6" },
